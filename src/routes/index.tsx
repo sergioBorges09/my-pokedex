@@ -22,3 +22,6 @@ export default function Routes() {
             <Stack.Screen name="PokemonDetail" component={PokemonDetailScreen} />
         </Stack.Navigator>
     )}
+
+                                                  
+    

@@ -65,5 +65,29 @@ export const createStyles = (theme: Theme) =>
       width: 72,
       height: 72,
     },
+    boxBottom: {
+      backgroundColor: theme.colors.background,
+      padding: 24,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexDirection: 'row', 
+      paddingHorizontal: 24,
+      paddingTop: 9,
+      paddingBottom: 16,
+      width: '100%',
+    },  
+    buttonEntrar: {
+      width: 80,
+      marginTop: 20,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 12,
+      borderRadius: 40,
+      alignItems: 'center',
+    },
+    buttonEntrarText: {
+      color: theme.colors.surface,
+      fontSize: 16,
+      fontWeight: '600',
+    },
   });
 
