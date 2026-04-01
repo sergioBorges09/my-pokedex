@@ -11,45 +11,28 @@ import {
   type PokemonDetailResponse,
   type PokemonSpeciesResponse
 } from '../../services/pokeapi';
-
-// const MOCK_POKEMON_DETAIL = {
-//   id: 25,
-//   name: 'pikachu',
-//   imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',
-//   types: ['electric'],
-//   height: 4,
-//   weight: 60,
-//   stats: [
-//     { name: 'hp', value: 35 },
-//     { name: 'attack', value: 55 },
-//     { name: 'defense', value: 40 },
-//     { name: 'speed', value: 90 },
-//   ],
-//   description:
-//     'Whenever Pikachu comes across something new, it blasts it with a jolt of electricity. If you come across a blackened berry, it is evidence that this Pokémon mistook the intensity of its charge.',
-// };
-
-// type PokemonDetailState = typeof MOCK_POKEMON_DETAIL;
+import { isFavorite, toggleFavorite } from '../../services/favoritesStorage';
+import { setLastViewedPokemon } from '../../services/lastViewedStorage';
 
 const TYPE_COLORS: Record<string, string> = {
   normal: '#A8A77A',
-	fire: '#EE8130',
-	water: '#6390F0',
-	electric: '#F7D02C',
-	grass: '#7AC74C',
-	ice: '#96D9D6',
-	fighting: '#C22E28',
-	poison: '#A33EA1',
-	ground: '#E2BF65',
-	flying: '#A98FF3',
-	psychic: '#F95587',
-	bug: '#A6B91A',
-	rock: '#B6A136',
-	ghost: '#735797',
-	dragon: '#6F35FC',
-	dark: '#705746',
-	steel: '#B7B7CE',
-	fairy: '#D685AD',
+  fire: '#EE8130',
+  water: '#6390F0',
+  electric: '#F7D02C',
+  grass: '#7AC74C',
+  ice: '#96D9D6',
+  fighting: '#C22E28',
+  poison: '#A33EA1',
+  ground: '#E2BF65',
+  flying: '#A98FF3',
+  psychic: '#F95587',
+  bug: '#A6B91A',
+  rock: '#B6A136',
+  ghost: '#735797',
+  dragon: '#6F35FC',
+  dark: '#705746',
+  steel: '#B7B7CE',
+  fairy: '#D685AD',
 };
 
 function getTypeColor(type: string) {
@@ -66,6 +49,9 @@ export default function PokemonDetailScreen() {
   const [description, setDescription] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [favorite, setFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(true);
 
   function getPokemonDescriptionFromSpecies(
     species: PokemonSpeciesResponse,
@@ -85,6 +71,20 @@ export default function PokemonDetailScreen() {
     return null;
   }
 
+  async function handleToggleFavorite() {
+    if (!pokemon) return;
+    const summary = {
+      id: pokemon.id,
+      name: pokemon.name,
+      imageUrl:
+        pokemon.sprites.front_default ??
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
+      types: pokemon.types.map((t) => t.type.name),
+    };
+    const updated = await toggleFavorite(summary);
+    setFavorite(updated.some((item) => item.id === pokemon.id));
+  }
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -100,6 +100,15 @@ export default function PokemonDetailScreen() {
 
         setPokemon(detail);
         setDescription(getPokemonDescriptionFromSpecies(species));
+
+        await setLastViewedPokemon({
+          id: detail.id,
+          name: detail.name,
+          imageUrl:
+            detail.sprites.front_default ??
+            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${detail.id}.png`,
+          types: detail.types.map((t) => t.type.name),
+        });
       } catch (e) {
         if ((e as Error).name !== 'AbortError') {
           setError('Não foi possível carregar os dados do pokémon!');
@@ -109,7 +118,17 @@ export default function PokemonDetailScreen() {
       }
     }
 
+    async function loadFavoriteStatus() {
+      try {
+        const result = await isFavorite(id);
+        setFavorite(result);
+      } finally {
+        setFavoriteLoading(false);
+      }
+    }
+
     loadPokemon();
+    loadFavoriteStatus();
 
     return () => { controller.abort(); };
   }, [id]);
@@ -168,6 +187,23 @@ export default function PokemonDetailScreen() {
           (<Image source={{ uri: pokemon.sprites.front_default }} style={styles.image} />) :
           null}
       </View>
+      
+      <TouchableOpacity
+        onPress={handleToggleFavorite}
+        disabled={favoriteLoading}
+        style={{
+          backgroundColor: favorite ? '#FFCB05' : '#E5E7EB',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderRadius: 999,
+          alignSelf: 'flex-start',
+          marginBottom: 16,
+        }}
+      >
+        <Text style={{ fontWeight: '700', color: '#111827' }}>
+          {favorite ? '★ Favorito' : '☆ Favoritar'}
+        </Text>
+      </TouchableOpacity>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sobre</Text>

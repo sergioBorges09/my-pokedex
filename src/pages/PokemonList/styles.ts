@@ -15,6 +15,14 @@ export const createStyles = (theme: Theme) =>
       paddingBottom: 16,
       color: theme.colors.text,
     },
+    lastViewedTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      paddingHorizontal: 24,
+      //paddingTop: 20,
+      paddingBottom: 16,
+      color: theme.colors.text,
+    },
     listContent: {
       paddingHorizontal: 24,
       paddingBottom: 24,
@@ -78,6 +86,27 @@ export const createStyles = (theme: Theme) =>
     buttonLogoutText: {
       color: theme.colors.text,
       fontSize: 14,
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      gap: 10,
+      paddingHorizontal: 24,
+      marginBottom: 12,
+    },
+    actionButton: {
+      flex: 1,
+      height: 42,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    favoritesButton: {
+      backgroundColor: '#2563eb', // azul
+    },
+    actionButtonText: {
+      color: '#fff',
+      fontWeight: '700',
+      fontSize: 13,
     },
   });
 
