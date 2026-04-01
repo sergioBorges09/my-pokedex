@@ -4,40 +4,63 @@ import { createStyles } from './styles';
 import { useTheme } from '../../global/themes';
 import { useRoute } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
-import Routes, { RootStackParamList } from '../../routes';
+import { RootStackParamList } from '../../routes';
 import {
   fetchPokemonDetail,
   fetchPokemonSpecies,
   type PokemonDetailResponse,
-  type PokemonSpeciesResponse,
+  type PokemonSpeciesResponse
 } from '../../services/pokeapi';
 
-
 // const MOCK_POKEMON_DETAIL = {
-// id: 25,
-// name: 'pikachu',
-// imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',
-// types: ['electric'],
-// height: 4,
-// weight: 60,
-// stats: [
-// { name: 'hp', value: 35 },
-// { name: 'attack', value: 55 },
-// { name: 'defense', value: 40 },
-//  { name: 'speed', value: 90 },
-// ],
-// description:
-//   'Whenever Pikachu comes across something new, it blasts it with a jolt of electricity. If you come across a blackened berry, it is evidence that this Pokémon mistook the intensity of its charge.',
+//   id: 25,
+//   name: 'pikachu',
+//   imageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',
+//   types: ['electric'],
+//   height: 4,
+//   weight: 60,
+//   stats: [
+//     { name: 'hp', value: 35 },
+//     { name: 'attack', value: 55 },
+//     { name: 'defense', value: 40 },
+//     { name: 'speed', value: 90 },
+//   ],
+//   description:
+//     'Whenever Pikachu comes across something new, it blasts it with a jolt of electricity. If you come across a blackened berry, it is evidence that this Pokémon mistook the intensity of its charge.',
 // };
 
 // type PokemonDetailState = typeof MOCK_POKEMON_DETAIL;
 
+const TYPE_COLORS: Record<string, string> = {
+  normal: '#A8A77A',
+	fire: '#EE8130',
+	water: '#6390F0',
+	electric: '#F7D02C',
+	grass: '#7AC74C',
+	ice: '#96D9D6',
+	fighting: '#C22E28',
+	poison: '#A33EA1',
+	ground: '#E2BF65',
+	flying: '#A98FF3',
+	psychic: '#F95587',
+	bug: '#A6B91A',
+	rock: '#B6A136',
+	ghost: '#735797',
+	dragon: '#6F35FC',
+	dark: '#705746',
+	steel: '#B7B7CE',
+	fairy: '#D685AD',
+};
+
+function getTypeColor(type: string) {
+  return TYPE_COLORS[type] ?? '#A8A8A8';
+}
+
 export default function PokemonDetailScreen() {
-  // const pokemon = MOCK_POKEMON_DETAIL;
   const theme = useTheme();
   const styles = createStyles(theme);
   const route = useRoute<RouteProp<RootStackParamList, 'PokemonDetail'>>();
-  const id = route.params.id
+  const { id } = route.params;
 
   const [pokemon, setPokemon] = useState<PokemonDetailResponse | null>(null);
   const [description, setDescription] = useState<string | null>(null);
@@ -77,23 +100,19 @@ export default function PokemonDetailScreen() {
 
         setPokemon(detail);
         setDescription(getPokemonDescriptionFromSpecies(species));
-      }
-      catch (e) {
-        if ((e as Error).name === 'AbortError') {
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') {
           setError('Não foi possível carregar os dados do pokémon!');
         }
-      }
-      finally {
+      } finally {
         setIsLoading(false);
       }
     }
 
     loadPokemon();
 
-    return () => {
-      controller.abort();
-    }
-  }, [id])
+    return () => { controller.abort(); };
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -137,7 +156,10 @@ export default function PokemonDetailScreen() {
 
         <View style={styles.typeContainer}>
           {pokemon.types.map(({ type }) => (
-            <View key={type.name} style={styles.typeBadge}>
+            <View
+              key={type.name}
+              style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[type.name] ?? '#A8A8A8' }]}
+            >
               <Text style={styles.typeText}>{type.name}</Text>
             </View>
           ))}
@@ -151,7 +173,7 @@ export default function PokemonDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sobre</Text>
         <Text style={styles.sectionText}>
-          {description ?? 'Descrição não disponível para este pokémon.'}
+          {description ?? 'Descrição não disponível.'}
         </Text>
       </View>
 
@@ -179,4 +201,3 @@ export default function PokemonDetailScreen() {
     </ScrollView>
   );
 };
-

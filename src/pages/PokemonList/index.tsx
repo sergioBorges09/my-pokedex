@@ -5,9 +5,34 @@ import { useTheme } from '../../global/themes';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../routes';
-import {fetchPokemonListPage, type PokemonListItemUI} from '../../services/pokeapi';
+import { fetchPokemonListPage, type PokemonListItemUI } from '../../services/pokeapi';
 
 const PAGE_SIZE = 10;
+
+const TYPE_COLORS: Record<string, string> = {
+  normal: '#A8A77A',
+	fire: '#EE8130',
+	water: '#6390F0',
+	electric: '#F7D02C',
+	grass: '#7AC74C',
+	ice: '#96D9D6',
+	fighting: '#C22E28',
+	poison: '#A33EA1',
+	ground: '#E2BF65',
+	flying: '#A98FF3',
+	psychic: '#F95587',
+	bug: '#A6B91A',
+	rock: '#B6A136',
+	ghost: '#735797',
+	dragon: '#6F35FC',
+	dark: '#705746',
+	steel: '#B7B7CE',
+	fairy: '#D685AD',
+};
+
+function getTypeColor(type: string) {
+  return TYPE_COLORS[type] ?? '#A8A8A8';
+}
 
 export default function PokemonListScreen() {
   const theme = useTheme();
@@ -17,11 +42,12 @@ export default function PokemonListScreen() {
   const [items, setItems] = useState<PokemonListItemUI[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const[isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
 
   async function loadInitial() {
     try {
@@ -38,7 +64,7 @@ export default function PokemonListScreen() {
     }
   }
 
-async function loadMore() {
+  async function loadMore() {
     if (isLoadingMore || isInitialLoading || isRefreshing || !hasNextPage) return;
     try {
       setIsLoadingMore(true);
@@ -72,14 +98,27 @@ async function loadMore() {
     loadInitial();
   }, []);
 
+  function handleLogout() {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    })
+  }
+
   const renderItem = ({ item }: { item: PokemonListItemUI }) => (
-    <TouchableOpacity 
-    style={styles.card} activeOpacity={0.8} onPress={() => navigation.navigate('PokemonDetail', { id: item.id })}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('PokemonDetail', { id: item.id })}
+    >
       <View style={styles.cardLeft}>
         <Text style={styles.cardName}>{item.name}</Text>
         {/* <View style={styles.typeContainer}>
           {item.types.map((type) => (
-            <View key={type} style={styles.typeBadge}>
+            <View
+              key={`${item.id}-${type}`}
+              style={[styles.typeBadge, { backgroundColor: getTypeColor(type) }]}
+            >
               <Text style={styles.typeText}>{type}</Text>
             </View>
           ))}
@@ -93,7 +132,7 @@ async function loadMore() {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={{ marginTop: 16, color: theme.colors.text }}>Carregando lista ...</Text>
+        <Text style={{ marginTop: 16, color: theme.colors.text }}>Carregando lista...</Text>
       </View>
     );
   }
@@ -107,13 +146,13 @@ async function loadMore() {
 
   return (
     <View style={styles.container}>
-
-      <View style={styles.boxBottom}>
-        <Text style={styles.headerTitle}>Pokédex</Text>
-        <TouchableOpacity style={styles.buttonEntrar} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Login' }] })}>
-          <Text style={styles.buttonEntrarText}>Voltar</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.headerTitle}>Pokédex</Text>
+      <TouchableOpacity
+        style={styles.buttonLogout}
+        onPress={handleLogout}
+      >
+        <Text style={styles.buttonLogoutText}>Sair</Text>
+      </TouchableOpacity>
       <FlatList
         data={items}
         keyExtractor={(item) => String(item.id)}

@@ -58,36 +58,26 @@ export const createStyles = (theme: Theme) =>
     },
     typeText: {
       fontSize: 12,
+      fontWeight: '700',
       textTransform: 'capitalize',
-      color: theme.colors.text,
+      color: '#fff',
     },
     cardImage: {
       width: 72,
       height: 72,
     },
-    boxBottom: {
-      backgroundColor: theme.colors.background,
-      padding: 24,
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexDirection: 'row', 
-      paddingHorizontal: 24,
-      paddingTop: 9,
-      paddingBottom: 16,
-      width: '100%',
-    },  
-    buttonEntrar: {
-      width: 80,
-      marginTop: 20,
-      backgroundColor: theme.colors.primary,
-      paddingVertical: 12,
-      borderRadius: 40,
-      alignItems: 'center',
+    buttonLogout: {
+      position: 'absolute',
+      top: 60,
+      right: 24,
+      backgroundColor: theme.colors.accent,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
     },
-    buttonEntrarText: {
-      color: theme.colors.surface,
-      fontSize: 16,
-      fontWeight: '600',
+    buttonLogoutText: {
+      color: theme.colors.text,
+      fontSize: 14,
     },
   });
 

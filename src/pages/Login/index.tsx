@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, 
+         Text, 
+         Image, 
+         TextInput, 
+         TouchableOpacity, 
+         ActivityIndicator } from 'react-native';
 import Logo from '../../assets/logo.png';
 import { createStyles } from './styles';
 import { useTheme } from '../../global/themes';
@@ -22,13 +27,13 @@ export default function LoginScreen() {
       console.log('Login action', { email, password });
       navigation.reset({
         index: 0,
-        routes: [{ name: 'PokemonList' }],
-      });
+        routes: [{name: "PokemonList"}],
+      })
       setIsLoading(false);
-    }, 1500);
+    }, 1500);    
   };
 
-  const isButtonDisabled = !email || !password || isLoading;
+  const isButtonDisabled = isLoading || !email || !password;
 
   return (
     <View style={styles.container}>
@@ -61,13 +66,15 @@ export default function LoginScreen() {
         </View>
       </View>
       <View style={styles.boxBottom}>
-        <TouchableOpacity 
-        style={[styles.buttonEntrar, isButtonDisabled &&{opacity: 0.6}]} 
+      <TouchableOpacity 
+        style={[styles.buttonEntrar, isButtonDisabled && {opacity: 0.2}]} 
         onPress={handleLogin}
         disabled={isButtonDisabled}
         >
-          {isLoading ? <ActivityIndicator color={theme.colors.text} /> : 
-          <Text style={styles.buttonEntrarText}>Entrar</Text>}
+          { isLoading ? 
+          <ActivityIndicator color={theme.colors.text}/> :
+          <Text style={styles.buttonEntrarText}>Entrar</Text>
+          }          
         </TouchableOpacity>
       </View>
     </View>

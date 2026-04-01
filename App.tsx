@@ -4,14 +4,14 @@ import { View, StyleSheet } from 'react-native';
 import LoginScreen from './src/pages/Login';
 import PokemonListScreen from './src/pages/PokemonList';
 import PokemonDetailScreen from './src/pages/PokemonDetail';
-import AppNavigater from './src/routes';
-import {NavigationContainer} from '@react-navigation/native';
+import AppNavigator from './src/routes';
+import { NavigationContainer } from '@react-navigation/native';
 
 export default function App() {
   return (
     <NavigationContainer>
-        <StatusBar style="dark" />
-        <AppNavigater/>
+      <StatusBar style="dark" />
+      <AppNavigator />
     </NavigationContainer>
   );
 }
