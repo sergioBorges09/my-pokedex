@@ -12,6 +12,7 @@ import {
   type PokemonSpeciesResponse
 } from '../../services/pokeapi';
 import { isFavorite, toggleFavorite } from '../../services/favoritesStorage';
+import { setLastViewedPokemon } from '../../services/lastViewedStorage';
 import { saveLastSeenPokemon } from '../../services/lastSeenStorage';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -53,10 +54,8 @@ export default function PokemonDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   const [favorite, setFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(true);
-
 
   function getPokemonDescriptionFromSpecies(
     species: PokemonSpeciesResponse,
@@ -76,7 +75,6 @@ export default function PokemonDetailScreen() {
     return null;
   }
 
-
   async function handleToggleFavorite() {
     if (!pokemon) return;
     const summary = {
@@ -90,7 +88,6 @@ export default function PokemonDetailScreen() {
     const updated = await toggleFavorite(summary);
     setFavorite(updated.some((item) => item.id === pokemon.id));
   }
-
 
   useEffect(() => {
     const controller = new AbortController();
@@ -122,17 +119,36 @@ export default function PokemonDetailScreen() {
 
     async function loadFavoriteStatus() {
       try {
-        const result = await isFavorite(id);
-        setFavorite(result);
+        setIsLoading(true);
+        setError(null);
+
+        const [detail, species] = await Promise.all([
+          fetchPokemonDetail(id, { signal: controller.signal }),
+          fetchPokemonSpecies(id, { signal: controller.signal }),
+        ]);
+
+        setPokemon(detail);
+        setDescription(getPokemonDescriptionFromSpecies(species));
+
+        await setLastViewedPokemon({
+          id: detail.id,
+          name: detail.name,
+          imageUrl:
+            detail.sprites.front_default ??
+            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${detail.id}.png`,
+          types: detail.types.map((t) => t.type.name),
+        });
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') {
+          setError('Não foi possível carregar os dados do pokémon!');
+        }
       } finally {
         setFavoriteLoading(false);
       }
     }
 
-
     loadPokemon();
     loadFavoriteStatus();
-
 
     return () => { controller.abort(); };
   }, [id]);
@@ -197,6 +213,23 @@ export default function PokemonDetailScreen() {
           (<Image source={{ uri: pokemon.sprites.front_default }} style={styles.image} />) :
           null}
       </View>
+      
+      <TouchableOpacity
+        onPress={handleToggleFavorite}
+        disabled={favoriteLoading}
+        style={{
+          backgroundColor: favorite ? '#FFCB05' : '#E5E7EB',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderRadius: 999,
+          alignSelf: 'flex-start',
+          marginBottom: 16,
+        }}
+      >
+        <Text style={{ fontWeight: '700', color: '#111827' }}>
+          {favorite ? '★ Favorito' : '☆ Favoritar'}
+        </Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         onPress={handleToggleFavorite}
