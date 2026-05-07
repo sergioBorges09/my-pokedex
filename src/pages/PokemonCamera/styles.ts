@@ -1,20 +1,15 @@
 import { StyleSheet } from 'react-native';
 import type { Theme } from '../../global/themes';
 
-// Styles revisados e prontos para uso
-// Compatível com o fluxo: Detalhe → Câmera → Detalhe
-
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#000', // fundo escuro padrão para câmera
+      backgroundColor: '#000',
     },
-
     camera: {
       flex: 1,
     },
-
     overlay: {
       position: 'absolute',
       left: 16,
@@ -23,21 +18,16 @@ export const createStyles = (theme: Theme) =>
       gap: 12,
       alignItems: 'center',
     },
-
     actionButton: {
       backgroundColor: '#16a34a',
       paddingHorizontal: 18,
       paddingVertical: 10,
       borderRadius: 999,
-      elevation: 3, // melhora visual no Android
     },
-
     actionText: {
       color: '#fff',
       fontWeight: '700',
-      fontSize: 16,
     },
-
     jsonBox: {
       width: '100%',
       maxHeight: 220,
@@ -47,12 +37,10 @@ export const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.2)',
     },
-
     jsonText: {
       color: '#fff',
       fontSize: 12,
     },
-
     center: {
       flex: 1,
       justifyContent: 'center',
@@ -60,11 +48,9 @@ export const createStyles = (theme: Theme) =>
       padding: 24,
       backgroundColor: theme.colors.background,
     },
-
     text: {
       color: theme.colors.text,
       marginBottom: 12,
       textAlign: 'center',
-      fontSize: 16,
     },
   });

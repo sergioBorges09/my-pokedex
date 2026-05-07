@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity, Share } from 'react-native';
 import { createStyles } from './styles';
 import { useTheme } from '../../global/themes';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../routes';
 import {
@@ -12,10 +14,6 @@ import {
 } from '../../services/pokeapi';
 import { isFavorite, toggleFavorite } from '../../services/favoritesStorage';
 import { setLastViewedPokemon } from '../../services/lastViewedStorage';
-import { saveLastSeenPokemon } from '../../services/lastSeenStorage';
-import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getCachedPokemonPhoto} from '../../services/pokemonPhotoMemoryCache';
 
 const TYPE_COLORS: Record<string, string> = {
   normal: '#A8A77A',
@@ -38,18 +36,16 @@ const TYPE_COLORS: Record<string, string> = {
   fairy: '#D685AD',
 };
 
-
 function getTypeColor(type: string) {
   return TYPE_COLORS[type] ?? '#A8A8A8';
 }
-
 
 export default function PokemonDetailScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
   const route = useRoute<RouteProp<RootStackParamList, 'PokemonDetail'>>();
   const { id } = route.params;
-
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'PokemonDetail'>>();
 
   const [pokemon, setPokemon] = useState<PokemonDetailResponse | null>(null);
   const [description, setDescription] = useState<string | null>(null);
@@ -58,14 +54,6 @@ export default function PokemonDetailScreen() {
 
   const [favorite, setFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(true);
-  const [cachedPhotoUri, setCachedPhotoUri] = useState<string | undefined>(undefined);
-
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'PokemonDetail'>>();
-  const isFocused = useIsFocused();
-
-  function handleOpenCamera() {
-    navigation.navigate('PokemonCamera', { id });
-  }
 
   function getPokemonDescriptionFromSpecies(
     species: PokemonSpeciesResponse,
@@ -116,43 +104,25 @@ export default function PokemonDetailScreen() {
 
       if (result.action === Share.sharedAction) {
         if (result.activityType) {
+
         }
       } else if (result.action === Share.dismissedAction) {
+
       }
     } catch (error) {
       console.warn('Erro ao compartilhar:', error);
     }
   }
 
+  function handleOpenCamera() {
+    navigation.navigate('PokemonCamera', { id });
+  }
+
+
   useEffect(() => {
     const controller = new AbortController();
 
-
     async function loadPokemon() {
-      try {
-        setIsLoading(true);
-
-        const detail = await fetchPokemonDetail(id);
-
-        setPokemon(detail);
-
-        await saveLastSeenPokemon({
-          id: detail.id,
-          name: detail.name,
-          imageUrl: detail.sprites.front_default ??
-            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${detail.id}.png`,
-          types: detail.types.map((t) => t.type.name),
-        });
-
-      } catch {
-        setError('Falha ao carregar o Pokémon.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-
-    async function loadFavoriteStatus() {
       try {
         setIsLoading(true);
         setError(null);
@@ -178,6 +148,15 @@ export default function PokemonDetailScreen() {
           setError('Não foi possível carregar os dados do pokémon!');
         }
       } finally {
+        setIsLoading(false);
+      }
+    }
+
+    async function loadFavoriteStatus() {
+      try {
+        const result = await isFavorite(id);
+        setFavorite(result);
+      } finally {
         setFavoriteLoading(false);
       }
     }
@@ -188,15 +167,6 @@ export default function PokemonDetailScreen() {
     return () => { controller.abort(); };
   }, [id]);
 
-
-  useEffect(() => {
-    if (isFocused) {
-      const cachedUri = getCachedPokemonPhoto(id);
-      setCachedPhotoUri(cachedUri ?? undefined);
-    }
-  }, [isFocused, id]);
-
-
   if (isLoading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -205,6 +175,7 @@ export default function PokemonDetailScreen() {
       </View>
     );
   }
+
 
   if (error || !pokemon) {
     return (
@@ -227,7 +198,6 @@ export default function PokemonDetailScreen() {
     );
   }
 
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
@@ -235,7 +205,6 @@ export default function PokemonDetailScreen() {
           <Text style={styles.name}>{pokemon.name}</Text>
           <Text style={styles.id}>#{String(pokemon.id).padStart(3, '0')}</Text>
         </View>
-
 
         <View style={styles.typeContainer}>
           {pokemon.types.map(({ type }) => (
@@ -248,18 +217,9 @@ export default function PokemonDetailScreen() {
           ))}
         </View>
 
-
-        {cachedPhotoUri || pokemon.sprites.front_default ? (
-          <Image
-            source={{ uri: cachedPhotoUri ?? pokemon.sprites.front_default ?? '' }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={[styles.image, { justifyContent: 'center', alignItems: 'center' }]}>
-            <Text style={{ color: theme.colors.text }}>Imagem indisponível</Text>
-          </View>
-        )}
+        {pokemon.sprites.front_default ?
+          (<Image source={{ uri: pokemon.sprites.front_default }} style={styles.image} />) :
+          null}
       </View>
 
       <TouchableOpacity
@@ -293,13 +253,6 @@ export default function PokemonDetailScreen() {
         <Text style={{ fontWeight: '700', color: '#fff' }}>Compartilhar</Text>
       </TouchableOpacity>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Sobre</Text>
-        <Text style={styles.sectionText}>
-          {description ?? 'Descrição não disponível.'}
-        </Text>
-      </View>
-
       <TouchableOpacity
         onPress={handleOpenCamera}
         style={{
@@ -314,6 +267,14 @@ export default function PokemonDetailScreen() {
         <Text style={{ fontWeight: '700', color: '#fff' }}>Abrir câmera</Text>
       </TouchableOpacity>
 
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Sobre</Text>
+        <Text style={styles.sectionText}>
+          {description ?? 'Descrição não disponível.'}
+        </Text>
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informações básicas</Text>
         <View style={styles.infoRow}>
@@ -325,7 +286,6 @@ export default function PokemonDetailScreen() {
           <Text style={styles.infoValue}>{pokemon.weight / 10} kg</Text>
         </View>
       </View>
-
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Stats base</Text>
