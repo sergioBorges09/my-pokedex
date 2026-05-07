@@ -56,17 +56,23 @@ export async function scheduleQuickReminder(seconds = 10) {
   const granted = await requestNotificationPermission();
   if (!granted) return;
 
+  // Use explicit `type` para o trigger conforme documentação do Expo
+  // e informe `channelId` no Android se necessário.
+  const trigger: any = {
+    type: 'timeInterval',
+    seconds,
+    repeats: false,
+  };
+
+  // Em Android, garantir que exista um channel (configureAndroidChannel)
+  // pode ser suficiente, mas manter `type` torna o trigger válido.
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Volte para a Pokédex',
       body: 'Tem Pokémon esperando por você!',
       sound: true,
     },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds,
-      repeats: false,
-    },
+    trigger,
   });
 }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity, Share } from 'react-native';
+import { View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity, Share, Alert } from 'react-native';
 import { createStyles } from './styles';
 import { useTheme } from '../../global/themes';
 import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
@@ -16,6 +16,7 @@ import { getCachedPokemonPhoto } from '../../services/pokemonPhotoMemoryCache';
 import { isFavorite, toggleFavorite } from '../../services/favoritesStorage';
 import { setLastViewedPokemon } from '../../services/lastViewedStorage';
 import { notifyPokemonFavorited } from '../../services/localNotifications';
+import { scheduleQuickReminder } from '../../services/localNotifications';
 
 const TYPE_COLORS: Record<string, string> = {
   normal: '#A8A77A',
@@ -124,6 +125,16 @@ export default function PokemonDetailScreen() {
 
   function handleOpenCamera() {
     navigation.navigate('PokemonCamera', { id });
+  }
+
+  async function handleScheduleQuickReminder() {
+    try {
+      await scheduleQuickReminder(7);
+      Alert.alert('Lembrete agendado', 'Você será lembrado em 7 segundos.');
+    } catch (err) {
+      console.warn('Erro ao agendar lembrete rápido:', err);
+      Alert.alert('Erro', 'Não foi possível agendar o lembrete.');
+    }
   }
 
 
@@ -293,6 +304,20 @@ export default function PokemonDetailScreen() {
         }}
       >
         <Text style={{ fontWeight: '700', color: '#fff' }}>Abrir câmera</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={handleScheduleQuickReminder}
+        style={{
+          backgroundColor: '#f59e0b',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderRadius: 999,
+          alignSelf: 'flex-start',
+          marginBottom: 16,
+        }}
+      >
+        <Text style={{ fontWeight: '700', color: '#111827' }}>Lembrar mais tarde</Text>
       </TouchableOpacity>
 
 
