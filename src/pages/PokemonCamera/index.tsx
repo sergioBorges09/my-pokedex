@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useNavigation } from '@react-navigation/native';
+import { setCachedPokemonPhoto } from '../../services/pokemonPhotoMemoryCache';
 import { useRoute } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../routes';
@@ -18,6 +20,7 @@ export default function PokemonCameraScreen() {
 
   const route = useRoute<RouteProp<RootStackParamList, 'PokemonCamera'>>();
   const { id } = route.params;
+  const navigation = useNavigation();
 
   if (!permission) {
     return (
@@ -49,6 +52,15 @@ export default function PokemonCameraScreen() {
     if (photo) {
       setPhotoResult(photo);
       console.log('PHOTO_RESULT (pokemon id = ' + id + '):', photo);
+      try {
+        // save to in-memory cache so PokemonDetail can read it
+        setCachedPokemonPhoto(id, photo.uri);
+      } catch (err) {
+        console.warn('Erro ao salvar foto em cache:', err);
+      }
+
+      // navigate back to detail screen so it refreshes
+      navigation.goBack();
     }
   }
 

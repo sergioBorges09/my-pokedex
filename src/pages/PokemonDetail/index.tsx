@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, ScrollView, ActivityIndicator, TouchableOpacity, Share } from 'react-native';
 import { createStyles } from './styles';
 import { useTheme } from '../../global/themes';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../routes';
@@ -12,8 +12,10 @@ import {
   type PokemonDetailResponse,
   type PokemonSpeciesResponse
 } from '../../services/pokeapi';
+import { getCachedPokemonPhoto } from '../../services/pokemonPhotoMemoryCache';
 import { isFavorite, toggleFavorite } from '../../services/favoritesStorage';
 import { setLastViewedPokemon } from '../../services/lastViewedStorage';
+import { notifyPokemonFavorited } from '../../services/localNotifications';
 
 const TYPE_COLORS: Record<string, string> = {
   normal: '#A8A77A',
@@ -48,6 +50,7 @@ export default function PokemonDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'PokemonDetail'>>();
 
   const [pokemon, setPokemon] = useState<PokemonDetailResponse | null>(null);
+  const [cachedPhotoUri, setCachedPhotoUri] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +87,12 @@ export default function PokemonDetailScreen() {
       types: pokemon.types.map((t) => t.type.name),
     };
     const updated = await toggleFavorite(summary);
+    const isNowFavorite = updated.some((item) => item.id == pokemon.id);
     setFavorite(updated.some((item) => item.id === pokemon.id));
+
+    if (isNowFavorite) {
+     await notifyPokemonFavorited(pokemon.name);
+    }
   }
 
   async function handleSharePokemon() {
@@ -164,8 +172,26 @@ export default function PokemonDetailScreen() {
     loadPokemon();
     loadFavoriteStatus();
 
+    // check in-memory photo cache
+    try {
+      const cached = getCachedPokemonPhoto(id);
+      setCachedPhotoUri(cached);
+    } catch (err) {
+      setCachedPhotoUri(null);
+    }
+
     return () => { controller.abort(); };
   }, [id]);
+
+  // update cached photo when returning to screen (focus)
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      const cached = getCachedPokemonPhoto(id);
+      setCachedPhotoUri(cached);
+    }
+  }, [isFocused, id]);
 
   if (isLoading) {
     return (
@@ -217,9 +243,11 @@ export default function PokemonDetailScreen() {
           ))}
         </View>
 
-        {pokemon.sprites.front_default ?
-          (<Image source={{ uri: pokemon.sprites.front_default }} style={styles.image} />) :
-          null}
+        {cachedPhotoUri ? (
+          <Image source={{ uri: cachedPhotoUri }} style={styles.image} />
+        ) : pokemon.sprites.front_default ? (
+          <Image source={{ uri: pokemon.sprites.front_default }} style={styles.image} />
+        ) : null}
       </View>
 
       <TouchableOpacity
